@@ -1,13 +1,11 @@
 import argparse
 import os
-import time
 from argparse import ArgumentParser, Action 
 import yaml
 from tqdm import trange
 
 import csv
 
-# from src.dino import DINOv2
 from src.utils import get_dataset_info 
 from src.detection import run_anomaly_detection
 from src.post_eval import eval_finished_run
@@ -29,7 +27,7 @@ class IntListAction(Action):
 def parse_args():
     parser = ArgumentParser()
     parser.add_argument("--dataset", type=str, default="MVTec")
-    parser.add_argument("--model_name", type=str, default="dinov2_vits14", help="Name of the backbone model. Choose from ['dinov2_vits14', 'dino_vitb24', 'dino_vitl14', 'dino_vitg14', 'vit_b_16'].")
+    parser.add_argument("--model_name", type=str, default="dinov2_vits14", help="Name of the backbone model. Choose from ['dinov2_vits14', 'dinov2_vitb14', 'dinov2_vitl14', 'dinov2_vitg14', 'vit_b_16'].")
     parser.add_argument("--data_root", type=str, default="data/mvtec_anomaly_detection",
                         help="Path to the root directory of the dataset.")
     parser.add_argument("--preprocess", type=str, default="agnostic",

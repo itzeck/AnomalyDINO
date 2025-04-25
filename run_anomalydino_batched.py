@@ -24,7 +24,7 @@ def parse_args():
     parser.add_argument("--dataset", type=str, default="MVTec")
     parser.add_argument("--data_root", type=str, default="data/mvtec_anomaly_detection")
     parser.add_argument("--model_size", type=str, default="s")
-    parser.add_argument("--resolution", type=int, default=672)
+    parser.add_argument("--resolution", type=int, default=448)
     parser.add_argument("--preprocess", type=str, default="masking_only")
     parser.add_argument("--save_examples", default=True)
     parser.add_argument("--device", default='cuda:3')

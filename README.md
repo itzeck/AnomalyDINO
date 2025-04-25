@@ -85,11 +85,11 @@ This work uses the following ressources and datasets:
 If you find this repository useful in your research/project, please consider citing the paper:
 
 ```
-@misc{damm2024anomalydino,
+@inproceedings{damm2024anomalydino,
       title={AnomalyDINO: Boosting Patch-based Few-shot Anomaly Detection with DINOv2}, 
       author={Simon Damm and Mike Laszkiewicz and Johannes Lederer and Asja Fischer},
-      year={2024},
-      eprint={2405.14529},
+      booktitle={Proceedings of the Winter Conference on Applications of Computer Vision (WACV 2025)},
+      year={2025},
       url={https://arxiv.org/abs/2405.14529}, 
 }
 ```

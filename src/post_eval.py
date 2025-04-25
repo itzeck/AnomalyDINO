@@ -458,6 +458,8 @@ def eval_finished_run(dataset, dataset_base_dir, anomaly_maps_dir, output_dir, s
                 anomaly_maps_dir=anomaly_maps_dir,
                 dataset=dataset)
         
+        print(f"Number of images: {len(gt_filenames)}")
+        
         if eval_segm:
             # Evaluate segmentation performance
             au_pro, auroc_px, f1_px = \
