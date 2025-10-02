@@ -11,6 +11,7 @@ from src.detection import run_anomaly_detection
 from src.post_eval import eval_finished_run
 from src.visualize import create_sample_plots
 from src.backbones import get_model
+import torch
 
 
 class IntListAction(Action):
@@ -63,8 +64,9 @@ if __name__=="__main__":
     objects, object_anomalies, masking_default, rotation_default = get_dataset_info(args.dataset, args.preprocess)
 
     # set CUDA device
-    os.environ["CUDA_VISIBLE_DEVICES"] = str(args.device[-1])
-    model = get_model(args.model_name, 'cuda', smaller_edge_size=args.resolution)
+    if torch.cuda.is_available():
+        os.environ["CUDA_VISIBLE_DEVICES"] = str(args.device[-1])
+    model = get_model(args.model_name, 'cuda' if torch.cuda.is_available() else 'cpu', smaller_edge_size=args.resolution)
 
     if not args.model_name.startswith("dinov2"):
         masking_default = {o: False for o in objects}
@@ -117,10 +119,11 @@ if __name__=="__main__":
                             os.makedirs(f"{plots_dir}/{object_name}/examples", exist_ok=True)
 
                         # CUDA warmup
-                        for _ in trange(args.warmup_iters, desc="CUDA warmup", leave=False):
-                            first_image = os.listdir(f"{args.data_root}/{object_name}/train/good")[0]
-                            img_tensor, grid_size = model.prepare_image(f"{args.data_root}/{object_name}/train/good/{first_image}")
-                            features = model.extract_features(img_tensor)
+                        if torch.cuda.is_available():
+                            for _ in trange(args.warmup_iters, desc="CUDA warmup", leave=False):
+                                first_image = os.listdir(f"{args.data_root}/{object_name}/train/good")[0]
+                                img_tensor, grid_size = model.prepare_image(f"{args.data_root}/{object_name}/train/good/{first_image}")
+                                features = model.extract_features(img_tensor)
                                          
                         anomaly_scores, time_memorybank, time_inference = run_anomaly_detection(
                                                                                 model,

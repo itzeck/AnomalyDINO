@@ -152,7 +152,8 @@ def evaluate_ad_batched(model,
                 plt.close()
 
             # empty CUDA cache
-            torch.cuda.empty_cache()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
             
     print("Average inference time per sample:", np.mean(inference_times))
     return AUROCs
@@ -161,7 +162,8 @@ if __name__=="__main__":
     args = parse_args()
 
     # set torch device
-    torch.cuda.set_device(args.device)
+    if torch.cuda.is_available():
+        torch.cuda.set_device(args.device)
 
     args.model_name = "dinov2_vit" + args.model_size.lower() + "14"
     model = get_model(args.model_name, args.device, smaller_edge_size=args.resolution)

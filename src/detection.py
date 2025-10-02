@@ -177,7 +177,8 @@ def run_anomaly_detection(
                 d_masked = output_distances.reshape(grid_size2)
                 
                 # save inference time
-                torch.cuda.synchronize() # Synchronize CUDA kernels before measuring time
+                if torch.cuda.is_available():
+                    torch.cuda.synchronize() # Synchronize CUDA kernels before measuring time
                 inf_time = time.time() - start_time
                 inference_times[f"{type_anomaly}/{img_test_nr}"] = inf_time
                 anomaly_scores[f"{type_anomaly}/{img_test_nr}"] = mean_top1p(output_distances.flatten())
