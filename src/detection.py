@@ -7,7 +7,7 @@ import faiss
 import tifffile as tiff
 import time
 import torch
-
+from sklearn.metrics import f1_score
 from src.utils import augment_image, dists2map, plot_ref_images
 from src.post_eval import mean_top1p
 
@@ -190,9 +190,10 @@ def run_anomaly_detection(
                     tiff.imwrite(f"{plots_dir}/anomaly_maps/seed={seed}/{object_name}/test/{type_anomaly}/{img_test_nr}.tiff", anomaly_map)
                 if save_patch_dists:
                     np.save(f"{plots_dir}/anomaly_maps/seed={seed}/{object_name}/test/{type_anomaly}/{img_test_nr}.npy", d_masked)
+                
 
                 # Save some example plots (3 per anomaly type)
-                if save_examples and idx < 3:
+                if save_examples and idx < 30:
 
                     fig, (ax1, ax2, ax3, ax4,) = plt.subplots(1, 4, figsize=(18, 4.5))
 
@@ -202,10 +203,11 @@ def run_anomaly_detection(
 
                     # plot patch distances 
                     d_masked[~mask2.reshape(grid_size2)] = 0.0
-                    plt.colorbar(ax3.imshow(d_masked), ax=ax3, fraction=0.12, pad=0.05, orientation="horizontal")
+                    score_top1p = mean_top1p(distances)
+                    d_masked_top1p = np.where(d_masked > score_top1p, d_masked, 0)
+                    plt.colorbar(ax3.imshow(d_masked_top1p), ax=ax3, fraction=0.12, pad=0.05, orientation="horizontal")
                     
                     # compute image level anomaly score (mean(top 1%) of patches = empirical tail value at risk for quantile 0.99)
-                    score_top1p = mean_top1p(distances)
                     ax4.axvline(score_top1p, color='r', linestyle='dashed', linewidth=1, label=round(score_top1p, 2))
                     ax4.legend()
                     ax4.hist(distances.flatten())
@@ -216,7 +218,7 @@ def run_anomaly_detection(
 
                     ax1.title.set_text("Test")
                     ax2.title.set_text("Test (PCA + Mask)")
-                    ax3.title.set_text("Patch Distances (1NN)")
+                    ax3.title.set_text("Top 1% Patch Distances (1NN)")
                     ax4.title.set_text("Hist of Distances")
 
                     plt.suptitle(f"Object: {object_name}, Type: {type_anomaly}, img = ...{image_test_path[-20:]}, object patches = {mask2.sum()}/{mask2.size}")
@@ -224,5 +226,23 @@ def run_anomaly_detection(
                     plt.tight_layout()
                     plt.savefig(f"{plots_dir}/{object_name}/examples/example_{type_anomaly}_{idx}.png")
                     plt.close()
+            
+        # calculate optimal top1% anomaly score threshold for classification
+        good_anomaly_scores = [anomaly_scores[key] for key in anomaly_scores if key.startswith("good")]
+        bad_anomaly_scores = [anomaly_scores[key] for key in anomaly_scores if key.startswith("bad")]
+        max_good_anomaly_score = max(good_anomaly_scores)
+        min_bad_anomaly_score = min(bad_anomaly_scores)
+        if min_bad_anomaly_score > max_good_anomaly_score:
+            optimal_threshold = max_good_anomaly_score
+            best_f1_score = 1
+        else:
+            # find threshold that maximizes F1 score 
+            f1_scores = []
+            for threshold in np.linspace(0, 1, 0.01):
+                f1_scores.append(f1_score(good_anomaly_scores, bad_anomaly_scores, threshold))
+            optimal_threshold = np.argmax(f1_scores)/100
+            best_f1_score = f1_scores[np.argmax(f1_scores)]
+
+        print(f"Optimal threshold for classification: {optimal_threshold}, yielding F1 score of {best_f1_score}")
 
     return anomaly_scores, time_memorybank, inference_times
